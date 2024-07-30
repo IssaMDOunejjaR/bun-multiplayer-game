@@ -1,0 +1,14 @@
+{
+  "name": "mini-game",
+  "type": "module",
+  "scripts": {
+    "serve": "bun run --watch dist/server.js",
+    "client": "bun run --watch dist/client.js"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
