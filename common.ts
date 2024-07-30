@@ -9,6 +9,7 @@ export interface Player {
   x: number;
   y: number;
   moving: Moving;
+  hue: string;
 }
 
 export enum MessageKind {
@@ -67,6 +68,7 @@ export interface PlayerJoined {
   id: number;
   x: number;
   y: number;
+  hue: string;
 }
 
 export function isPlayerJoined(arg: any): arg is PlayerJoined {
@@ -75,7 +77,8 @@ export function isPlayerJoined(arg: any): arg is PlayerJoined {
     arg.kind === MessageKind.PlayerJoined &&
     isNumber(arg.id) &&
     isNumber(arg.x) &&
-    isNumber(arg.y)
+    isNumber(arg.y) &&
+    isString(arg.hue)
   );
 }
 
@@ -128,6 +131,10 @@ export function isPlayerStartMoving(arg: any): arg is PlayerStartMoving {
 
 function isNumber(arg: any): arg is number {
   return typeof arg === "number";
+}
+
+function isString(arg: any): arg is string {
+  return typeof arg === "string";
 }
 
 function isBoolean(arg: any): arg is boolean {

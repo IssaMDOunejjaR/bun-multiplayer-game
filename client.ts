@@ -35,6 +35,7 @@ const ws = new WebSocket(`http://localhost:${common.PORT}/`);
             up: false,
             down: false,
           },
+          hue: data.hue,
         });
       } else if (common.isPlayerMoving(data)) {
         const player = joinedPlayers.get(data.id);
@@ -47,7 +48,7 @@ const ws = new WebSocket(`http://localhost:${common.PORT}/`);
       } else if (common.isPlayerLeft(data)) {
         joinedPlayers.delete(data.id);
       } else {
-        console.error("Unknown message");
+        console.error("Unknown message: ", data);
       }
     });
 
@@ -85,7 +86,7 @@ const ws = new WebSocket(`http://localhost:${common.PORT}/`);
       }
     });
 
-    document.addEventListener("keyup", (e: KeyboardEvent) => { });
+    document.addEventListener("keyup", (e: KeyboardEvent) => {});
 
     let previousTimestamp = 0;
 
@@ -95,10 +96,11 @@ const ws = new WebSocket(`http://localhost:${common.PORT}/`);
 
       ctx.fillStyle = "white";
       ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      ctx.fillStyle = "red";
 
       joinedPlayers.forEach((player) => {
         common.updatePlayer(player, deltaTime);
+
+        ctx.fillStyle = player.hue;
 
         ctx.fillRect(
           player.x,

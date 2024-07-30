@@ -22,6 +22,10 @@ type Event =
 const eventQueue: Array<Event> = [];
 const joinedPlayers = new Map<number, PlayerWithSocket>();
 
+function randomStyle(): string {
+  return `hsl(${Math.floor(Math.random() * 360)} 80% 50%)`;
+}
+
 function onConnect(ws: ServerWebSocket<SocketData>) {
   ws.subscribe("game");
 
@@ -33,6 +37,7 @@ function onConnect(ws: ServerWebSocket<SocketData>) {
 
   const x = Math.random() * (common.GAME_WIDTH - common.PLAYER_SIZE);
   const y = Math.random() * (common.GAME_HEIGHT - common.PLAYER_SIZE);
+  const hue = randomStyle();
 
   joinedPlayers.set(joinedId, {
     ws,
@@ -45,6 +50,7 @@ function onConnect(ws: ServerWebSocket<SocketData>) {
       up: false,
       down: false,
     },
+    hue,
   });
 
   eventQueue.push({
@@ -57,6 +63,7 @@ function onConnect(ws: ServerWebSocket<SocketData>) {
     id: joinedId,
     x,
     y,
+    hue,
   });
 }
 
@@ -133,6 +140,7 @@ function tick() {
                   id: otherPlayer.id,
                   x: otherPlayer.x,
                   y: otherPlayer.y,
+                  hue: otherPlayer.hue,
                 }),
               );
             });
@@ -144,6 +152,7 @@ function tick() {
                 id: playerJoined.id,
                 x: playerJoined.x,
                 y: playerJoined.y,
+                hue: playerJoined.hue,
               }),
             );
           }
