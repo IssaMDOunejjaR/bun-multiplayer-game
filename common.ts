@@ -1,8 +1,14 @@
+import type { ServerWebSocket } from "bun";
+
 export const PORT = 3333;
-export const GAME_WIDTH = 800;
-export const GAME_HEIGHT = 600;
-export const PLAYER_SIZE = 30;
-export const PLAYER_SPEED = 500;
+export const GAME_WIDTH = 1000;
+export const GAME_HEIGHT = 800;
+export const PLAYER_SIZE = 20;
+export const PLAYER_SPEED = 400;
+
+export interface SocketData {
+  id: number;
+}
 
 export interface Player {
   id: number;
@@ -26,6 +32,16 @@ type Moving = {
   [key in Direction]: boolean;
 };
 
+export function isMoving(arg: any): arg is Moving {
+  return (
+    arg &&
+    isBoolean(arg.left) &&
+    isBoolean(arg.right) &&
+    isBoolean(arg.up) &&
+    isBoolean(arg.down)
+  );
+}
+
 export type Vector = { x: number; y: number };
 
 export const DIRECTION_VECTORS: { [key in Direction]: Vector } = {
@@ -39,7 +55,7 @@ export function isDirection(arg: any): arg is Direction {
   return DIRECTION_VECTORS[arg as Direction] !== undefined;
 }
 
-export const DIRECTONS_KEYS: { [key: string]: string } = {
+export const DIRECTONS_KEYS: { [key: string]: Direction } = {
   ArrowUp: "up",
   w: "up",
   k: "up",
@@ -57,10 +73,22 @@ export const DIRECTONS_KEYS: { [key: string]: string } = {
 export interface Welcome {
   kind: MessageKind.Welcome;
   id: number;
+  x: number;
+  y: number;
+  moving: Moving;
+  hue: string;
 }
 
 export function isWelcome(arg: any): arg is Welcome {
-  return arg && arg.kind === MessageKind.Welcome && isNumber(arg.id);
+  return (
+    arg &&
+    arg.kind === MessageKind.Welcome &&
+    isNumber(arg.id) &&
+    isNumber(arg.x) &&
+    isNumber(arg.y) &&
+    isMoving(arg.moving) &&
+    isString(arg.hue)
+  );
 }
 
 export interface PlayerJoined {
@@ -157,12 +185,17 @@ export function updatePlayer(player: Player, deltaTime: number) {
     }
   }
 
-  // const l = dx * dx + dy * dy;
-  // if (l !== 0) {
-  //   dx /= l;
-  //   dy /= l;
-  // }
-
   player.x = modulo(player.x + dx * PLAYER_SPEED * deltaTime, GAME_WIDTH);
   player.y = modulo(player.y + dy * PLAYER_SPEED * deltaTime, GAME_HEIGHT);
+}
+
+export function sendMessage<T>(
+  ws: WebSocket | ServerWebSocket<SocketData>,
+  message: T,
+): number {
+  const data = JSON.stringify(message);
+
+  ws.send(JSON.stringify(message));
+
+  return data.length;
 }

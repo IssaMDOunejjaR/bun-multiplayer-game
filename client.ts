@@ -1,6 +1,6 @@
 import * as common from "./common";
 
-const ws = new WebSocket(`http://localhost:${common.PORT}/`);
+const ws = new WebSocket(`ws://localhost:${common.PORT}/`);
 
 (async function () {
   const canvas = document.getElementById("game") as HTMLCanvasElement | null;
@@ -17,13 +17,21 @@ const ws = new WebSocket(`http://localhost:${common.PORT}/`);
   ctx.canvas.height = common.GAME_HEIGHT;
 
   ws.addEventListener("open", () => {
-    let id: number;
+    let me: common.Player | undefined;
 
     ws.addEventListener("message", (e: MessageEvent) => {
       const data = JSON.parse(e.data);
 
       if (common.isWelcome(data)) {
-        id = data.id;
+        me = {
+          id: data.id,
+          x: data.x,
+          y: data.y,
+          moving: data.moving,
+          hue: data.hue,
+        };
+
+        joinedPlayers.set(data.id, me);
       } else if (common.isPlayerJoined(data)) {
         joinedPlayers.set(data.id, {
           id: data.id,
@@ -57,36 +65,34 @@ const ws = new WebSocket(`http://localhost:${common.PORT}/`);
     });
 
     document.addEventListener("keydown", (e: KeyboardEvent) => {
-      const direction = common.DIRECTONS_KEYS[e.key];
+      if (me) {
+        const direction = common.DIRECTONS_KEYS[e.key];
 
-      if (direction !== undefined) {
-        ws.send(
-          JSON.stringify({
+        if (direction !== undefined) {
+          common.sendMessage<common.PlayerStartMoving>(ws, {
             kind: common.MessageKind.PlayerStartMoving,
-            id,
+            id: me.id,
             start: true,
             direction,
-          }),
-        );
+          });
+        }
       }
     });
 
     document.addEventListener("keyup", (e: KeyboardEvent) => {
-      const direction = common.DIRECTONS_KEYS[e.key];
+      if (me) {
+        const direction = common.DIRECTONS_KEYS[e.key];
 
-      if (direction !== undefined) {
-        ws.send(
-          JSON.stringify({
+        if (direction !== undefined) {
+          common.sendMessage<common.PlayerStartMoving>(ws, {
             kind: common.MessageKind.PlayerStartMoving,
-            id,
+            id: me.id,
             start: false,
             direction,
-          }),
-        );
+          });
+        }
       }
     });
-
-    document.addEventListener("keyup", (e: KeyboardEvent) => {});
 
     let previousTimestamp = 0;
 
@@ -94,13 +100,15 @@ const ws = new WebSocket(`http://localhost:${common.PORT}/`);
       const deltaTime = (timestamp - previousTimestamp) / 1000;
       previousTimestamp = timestamp;
 
-      ctx.fillStyle = "white";
+      ctx.fillStyle = "#222";
       ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
       joinedPlayers.forEach((player) => {
         common.updatePlayer(player, deltaTime);
 
         ctx.fillStyle = player.hue;
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 3;
 
         ctx.fillRect(
           player.x,
@@ -108,6 +116,15 @@ const ws = new WebSocket(`http://localhost:${common.PORT}/`);
           common.PLAYER_SIZE,
           common.PLAYER_SIZE,
         );
+
+        if (me && player.id === me.id) {
+          ctx.strokeRect(
+            player.x,
+            player.y,
+            common.PLAYER_SIZE,
+            common.PLAYER_SIZE,
+          );
+        }
       });
 
       window.requestAnimationFrame(frame);
