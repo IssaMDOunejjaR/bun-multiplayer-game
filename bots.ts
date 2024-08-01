@@ -92,7 +92,12 @@ function createBot() {
         id: data.id,
         x: data.x,
         y: data.y,
-        moving: data.moving,
+        moving: {
+          left: false,
+          right: false,
+          up: false,
+          down: false,
+        },
         hue: data.hue,
       };
 

@@ -84,14 +84,6 @@ const eventQueue: Array<Event> = [];
 const joinedPlayers = new Map<number, PlayerWithSocket>();
 
 function onConnect(ws: ServerWebSocket<SocketData>) {
-  // const buffer = new DataView(new ArrayBuffer(8));
-  //
-  // buffer.setUint32(0, 69420, true);
-  // buffer.setUint32(4, 69420, true);
-  //
-  // ws.send(buffer);
-  // ws.close();
-
   ws.subscribe("game");
 
   const joinedId = id++;
@@ -124,7 +116,6 @@ function onConnect(ws: ServerWebSocket<SocketData>) {
     id: joinedId,
     x,
     y,
-    moving,
     hue,
   });
 
@@ -201,10 +192,32 @@ function tick() {
           const player = joinedPlayers.get(event.id);
 
           if (player) {
-            byteSentCount += common.sendMessage<common.Welcome>(
-              player.ws,
-              event,
+            const view = new DataView(
+              new ArrayBuffer(common.WelcomeStruct.size),
             );
+
+            common.WelcomeStruct.kind.write(
+              view,
+              0,
+              common.MessageKind.Welcome,
+            );
+            common.WelcomeStruct.id.write(view, 0, event.id);
+            common.WelcomeStruct.x.write(view, 0, event.x);
+            common.WelcomeStruct.y.write(view, 0, event.y);
+            common.WelcomeStruct.hue.write(
+              view,
+              0,
+              Math.floor(event.hue / (360 * 256)),
+            );
+
+            player.ws.send(view);
+
+            byteSentCount += view.byteLength;
+
+            // byteSentCount += common.sendMessage<common.Welcome>(
+            //   player.ws,
+            //   event,
+            // );
             messageCount += 1;
           }
         }
@@ -277,7 +290,7 @@ function tick() {
   bytesReceivedWitinTick = 0;
 
   if (stats.ticksCount % SERVER_FPS === 0) {
-    printStats();
+    // printStats();
   }
 
   setTimeout(tick, 1000 / SERVER_FPS);

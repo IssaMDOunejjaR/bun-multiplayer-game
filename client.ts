@@ -25,13 +25,38 @@ import * as common from "./common";
   ws.addEventListener("open", () => { });
 
   ws.addEventListener("message", (e: MessageEvent) => {
-    // console.log(e.data);
-    // if (e.data instanceof ArrayBuffer) {
-    //   const view = new DataView(e.data);
-    //
-    //   console.log(view.getUint8(0));
-    // }
-    // return;
+    if (e.data instanceof ArrayBuffer) {
+      const view = new DataView(e.data);
+      const kind = common.WelcomeStruct.kind.read(view, 0);
+      const id = common.WelcomeStruct.id.read(view, 0);
+      const x = common.WelcomeStruct.x.read(view, 0);
+      const y = common.WelcomeStruct.y.read(view, 0);
+      const hue = common.WelcomeStruct.hue.read(view, 0);
+
+      if (
+        kind === common.MessageKind.Welcome &&
+        view.byteLength === common.WelcomeStruct.size
+      ) {
+        me = {
+          id,
+          x,
+          y,
+          moving: {
+            left: false,
+            right: false,
+            up: false,
+            down: false,
+          },
+          hue,
+        };
+
+        joinedPlayers.set(id, me);
+      }
+    } else {
+      console.error("Unknown message: ", e.data);
+    }
+
+    return;
     const data = JSON.parse(e.data);
 
     if (common.isWelcome(data)) {
@@ -39,7 +64,12 @@ import * as common from "./common";
         id: data.id,
         x: data.x,
         y: data.y,
-        moving: data.moving,
+        moving: {
+          left: false,
+          right: false,
+          up: false,
+          down: false,
+        },
         hue: data.hue,
       };
 

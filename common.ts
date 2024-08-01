@@ -70,13 +70,77 @@ export const DIRECTONS_KEYS: { [key: string]: Direction } = {
   l: "right",
 };
 
-// [kind: Uint8Array, id: Uint32Array, x: Uint16Array, y: Uint16Array]
+const UINT8_SIZE = 1;
+const UINT32_SIZE = 4;
+const FLOAT32_SIZE = 4;
+
+interface Field {
+  offset: number;
+  size: number;
+  read: (view: DataView, baseOffset: number) => number;
+  write: (view: DataView, baseOffset: number, value: number) => void;
+}
+
+function allocUint8Field(alloc: { iota: number }): Field {
+  const offset = alloc.iota;
+
+  alloc.iota += UINT8_SIZE;
+
+  return {
+    offset,
+    size: UINT8_SIZE,
+    read: (view, baseOffset) => view.getUint8(baseOffset + offset),
+    write: (view, baseOffset, value) =>
+      view.setUint8(baseOffset + offset, value),
+  };
+}
+
+function allocUint32Field(alloc: { iota: number }): Field {
+  const offset = alloc.iota;
+
+  alloc.iota += UINT32_SIZE;
+
+  return {
+    offset,
+    size: UINT32_SIZE,
+    read: (view, baseOffset) => view.getUint32(baseOffset + offset, true),
+    write: (view, baseOffset, value) =>
+      view.setUint32(baseOffset + offset, value, true),
+  };
+}
+
+function allocFloat32Field(alloc: { iota: number }): Field {
+  const offset = alloc.iota;
+
+  alloc.iota += FLOAT32_SIZE;
+
+  return {
+    offset,
+    size: FLOAT32_SIZE,
+    read: (view, baseOffset) => view.getFloat32(baseOffset + offset, true),
+    write: (view, baseOffset, value) =>
+      view.setFloat32(baseOffset + offset, value, true),
+  };
+}
+
+export const WelcomeStruct = (() => {
+  const alloc = { iota: 0 };
+
+  return {
+    kind: allocUint8Field(alloc),
+    id: allocUint32Field(alloc),
+    x: allocFloat32Field(alloc),
+    y: allocFloat32Field(alloc),
+    hue: allocUint8Field(alloc),
+    size: alloc.iota,
+  };
+})();
+
 export interface Welcome {
   kind: MessageKind.Welcome;
   id: number;
   x: number;
   y: number;
-  moving: Moving;
   hue: number;
 }
 
@@ -87,7 +151,6 @@ export function isWelcome(arg: any): arg is Welcome {
     isNumber(arg.id) &&
     isNumber(arg.x) &&
     isNumber(arg.y) &&
-    isMoving(arg.moving) &&
     isNumber(arg.hue)
   );
 }
@@ -160,10 +223,6 @@ export function isPlayerStartMoving(arg: any): arg is PlayerStartMoving {
 
 function isNumber(arg: any): arg is number {
   return typeof arg === "number";
-}
-
-function isString(arg: any): arg is string {
-  return typeof arg === "string";
 }
 
 function isBoolean(arg: any): arg is boolean {
