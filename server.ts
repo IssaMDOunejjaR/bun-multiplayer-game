@@ -207,7 +207,7 @@ function tick() {
             common.WelcomeStruct.hue.write(
               view,
               0,
-              Math.floor(event.hue / (360 * 256)),
+              Math.floor((event.hue / 360) * 256),
             );
 
             player.ws.send(view);

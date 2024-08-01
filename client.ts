@@ -27,33 +27,29 @@ import * as common from "./common";
   ws.addEventListener("message", (e: MessageEvent) => {
     if (e.data instanceof ArrayBuffer) {
       const view = new DataView(e.data);
-      const kind = common.WelcomeStruct.kind.read(view, 0);
-      const id = common.WelcomeStruct.id.read(view, 0);
-      const x = common.WelcomeStruct.x.read(view, 0);
-      const y = common.WelcomeStruct.y.read(view, 0);
-      const hue = common.WelcomeStruct.hue.read(view, 0);
 
       if (
-        kind === common.MessageKind.Welcome &&
-        view.byteLength === common.WelcomeStruct.size
+        view.byteLength === common.WelcomeStruct.size &&
+        common.WelcomeStruct.kind.read(view, 0) === common.MessageKind.Welcome
       ) {
         me = {
-          id,
-          x,
-          y,
+          id: common.WelcomeStruct.id.read(view, 0),
+          x: common.WelcomeStruct.x.read(view, 0),
+          y: common.WelcomeStruct.y.read(view, 0),
           moving: {
             left: false,
             right: false,
             up: false,
             down: false,
           },
-          hue,
+          hue: (common.WelcomeStruct.hue.read(view, 0) / 256) * 360,
         };
 
-        joinedPlayers.set(id, me);
+        joinedPlayers.set(me.id, me);
       }
     } else {
       console.error("Unknown message: ", e.data);
+      ws?.close();
     }
 
     return;
