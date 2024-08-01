@@ -67,7 +67,7 @@ function publish<T>(ws: ServerWebSocket<SocketData> | Server, message: T) {
 
   ws.publish("game", data);
 
-  return data.length;
+  return data.length * joinedPlayers.size;
 }
 
 interface PlayerWithSocket extends common.Player {
@@ -83,11 +83,15 @@ type Event =
 const eventQueue: Array<Event> = [];
 const joinedPlayers = new Map<number, PlayerWithSocket>();
 
-function randomStyle(): string {
-  return `hsl(${Math.floor(Math.random() * 360)} 80% 50%)`;
-}
-
 function onConnect(ws: ServerWebSocket<SocketData>) {
+  // const buffer = new DataView(new ArrayBuffer(8));
+  //
+  // buffer.setUint32(0, 69420, true);
+  // buffer.setUint32(4, 69420, true);
+  //
+  // ws.send(buffer);
+  // ws.close();
+
   ws.subscribe("game");
 
   const joinedId = id++;
@@ -98,7 +102,7 @@ function onConnect(ws: ServerWebSocket<SocketData>) {
 
   const x = Math.random() * (common.GAME_WIDTH - common.PLAYER_SIZE);
   const y = Math.random() * (common.GAME_HEIGHT - common.PLAYER_SIZE);
-  const hue = randomStyle();
+  const hue = Math.floor(Math.random() * 360);
   const moving = {
     left: false,
     right: false,

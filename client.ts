@@ -2,6 +2,8 @@ import * as common from "./common";
 
 const ws = new WebSocket(`ws://localhost:${common.PORT}/`);
 
+ws.binaryType = "arraybuffer";
+
 (async function () {
   const canvas = document.getElementById("game") as HTMLCanvasElement | null;
 
@@ -20,6 +22,13 @@ const ws = new WebSocket(`ws://localhost:${common.PORT}/`);
     let me: common.Player | undefined;
 
     ws.addEventListener("message", (e: MessageEvent) => {
+      // console.log(e.data);
+      // if (e.data instanceof ArrayBuffer) {
+      //   const view = new DataView(e.data);
+      //
+      //   console.log(view.getUint8(0));
+      // }
+      // return;
       const data = JSON.parse(e.data);
 
       if (common.isWelcome(data)) {
@@ -104,7 +113,9 @@ const ws = new WebSocket(`ws://localhost:${common.PORT}/`);
       joinedPlayers.forEach((player) => {
         common.updatePlayer(player, deltaTime);
 
-        ctx.fillStyle = player.hue;
+        const brightness = player.id === me?.id ? "50%" : "30%";
+
+        ctx.fillStyle = `hsl(${player.hue} 80% ${brightness})`;
         ctx.strokeStyle = "white";
         ctx.lineWidth = 3;
 

@@ -32,7 +32,6 @@ function createBot() {
             kind: common.MessageKind.PlayerStartMoving,
             start: false,
             direction,
-            id: bot.me.id,
           });
         }
       }
@@ -49,14 +48,12 @@ function createBot() {
               kind: common.MessageKind.PlayerStartMoving,
               start: true,
               direction: "right",
-              id: bot.me.id,
             });
           } else {
             common.sendMessage<common.PlayerStartMoving>(bot.ws, {
               kind: common.MessageKind.PlayerStartMoving,
               start: true,
               direction: "left",
-              id: bot.me.id,
             });
           }
 
@@ -67,14 +64,12 @@ function createBot() {
               kind: common.MessageKind.PlayerStartMoving,
               start: true,
               direction: "down",
-              id: bot.me.id,
             });
           } else {
             common.sendMessage<common.PlayerStartMoving>(bot.ws, {
               kind: common.MessageKind.PlayerStartMoving,
               start: true,
               direction: "up",
-              id: bot.me.id,
             });
           }
 
@@ -133,6 +128,6 @@ function createBot() {
   setTimeout(tick, 1000 / BOT_FPS);
 }
 
-for (let i = 0; i < 20; i++) {
+for (let i = 0; i < 50; i++) {
   createBot();
 }

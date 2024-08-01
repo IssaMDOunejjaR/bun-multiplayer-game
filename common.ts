@@ -15,7 +15,7 @@ export interface Player {
   x: number;
   y: number;
   moving: Moving;
-  hue: string;
+  hue: number;
 }
 
 export enum MessageKind {
@@ -70,13 +70,14 @@ export const DIRECTONS_KEYS: { [key: string]: Direction } = {
   l: "right",
 };
 
+// [kind: Uint8Array, id: Uint32Array, x: Uint16Array, y: Uint16Array]
 export interface Welcome {
   kind: MessageKind.Welcome;
   id: number;
   x: number;
   y: number;
   moving: Moving;
-  hue: string;
+  hue: number;
 }
 
 export function isWelcome(arg: any): arg is Welcome {
@@ -87,7 +88,7 @@ export function isWelcome(arg: any): arg is Welcome {
     isNumber(arg.x) &&
     isNumber(arg.y) &&
     isMoving(arg.moving) &&
-    isString(arg.hue)
+    isNumber(arg.hue)
   );
 }
 
@@ -97,7 +98,7 @@ export interface PlayerJoined {
   x: number;
   y: number;
   moving: Moving;
-  hue: string;
+  hue: number;
 }
 
 export function isPlayerJoined(arg: any): arg is PlayerJoined {
@@ -108,7 +109,7 @@ export function isPlayerJoined(arg: any): arg is PlayerJoined {
     isNumber(arg.x) &&
     isNumber(arg.y) &&
     isMoving(arg.moving) &&
-    isString(arg.hue)
+    isNumber(arg.hue)
   );
 }
 
