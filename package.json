@@ -3,7 +3,8 @@
   "type": "module",
   "scripts": {
     "serve": "bun run --watch dist/server.js",
-    "client": "bun run --watch dist/client.js"
+    "client": "bun run --watch dist/client.js",
+    "bots": "bun run --watch dist/bots.js"
   },
   "devDependencies": {
     "@types/bun": "latest"
