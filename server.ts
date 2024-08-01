@@ -62,7 +62,7 @@ function printStats() {
   console.log(" Players left:", stats.playersLeft);
 }
 
-function publish(ws: ServerWebSocket<SocketData> | Server, message: any) {
+function publish<T>(ws: ServerWebSocket<SocketData> | Server, message: T) {
   const data = JSON.stringify(message);
 
   ws.publish("game", data);
@@ -99,18 +99,19 @@ function onConnect(ws: ServerWebSocket<SocketData>) {
   const x = Math.random() * (common.GAME_WIDTH - common.PLAYER_SIZE);
   const y = Math.random() * (common.GAME_HEIGHT - common.PLAYER_SIZE);
   const hue = randomStyle();
+  const moving = {
+    left: false,
+    right: false,
+    up: false,
+    down: false,
+  };
 
   joinedPlayers.set(joinedId, {
     ws,
     id: joinedId,
     x,
     y,
-    moving: {
-      left: false,
-      right: false,
-      up: false,
-      down: false,
-    },
+    moving,
     hue,
   });
 
@@ -119,12 +120,7 @@ function onConnect(ws: ServerWebSocket<SocketData>) {
     id: joinedId,
     x,
     y,
-    moving: {
-      left: false,
-      right: false,
-      up: false,
-      down: false,
-    },
+    moving,
     hue,
   });
 
@@ -133,6 +129,7 @@ function onConnect(ws: ServerWebSocket<SocketData>) {
     id: joinedId,
     x,
     y,
+    moving,
     hue,
   });
 
@@ -140,11 +137,7 @@ function onConnect(ws: ServerWebSocket<SocketData>) {
   stats.playersJoined += 1;
 }
 
-function onDisconnect(
-  ws: ServerWebSocket<SocketData>,
-  code: number,
-  reason: string,
-) {
+function onDisconnect(ws: ServerWebSocket<SocketData>) {
   ws.unsubscribe("game");
 
   joinedPlayers.delete(ws.data.id);
@@ -153,6 +146,7 @@ function onDisconnect(
     kind: common.MessageKind.PlayerLeft,
     id: ws.data.id,
   });
+
   stats.playersLeft += 1;
 }
 
@@ -225,6 +219,7 @@ function tick() {
                     id: otherPlayer.id,
                     x: otherPlayer.x,
                     y: otherPlayer.y,
+                    moving: otherPlayer.moving,
                     hue: otherPlayer.hue,
                   },
                 );
@@ -232,13 +227,15 @@ function tick() {
               }
             });
 
-            byteSentCount += publish(playerJoined.ws, {
+            byteSentCount += publish<common.PlayerJoined>(playerJoined.ws, {
               kind: common.MessageKind.PlayerJoined,
               id: playerJoined.id,
               x: playerJoined.x,
               y: playerJoined.y,
+              moving: playerJoined.moving,
               hue: playerJoined.hue,
             });
+
             messageCount += joinedPlayers.size;
           }
         }

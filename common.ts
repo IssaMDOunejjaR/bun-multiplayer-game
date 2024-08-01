@@ -96,6 +96,7 @@ export interface PlayerJoined {
   id: number;
   x: number;
   y: number;
+  moving: Moving;
   hue: string;
 }
 
@@ -106,6 +107,7 @@ export function isPlayerJoined(arg: any): arg is PlayerJoined {
     isNumber(arg.id) &&
     isNumber(arg.x) &&
     isNumber(arg.y) &&
+    isMoving(arg.moving) &&
     isString(arg.hue)
   );
 }
@@ -142,7 +144,6 @@ export function isPlayerMoving(arg: any): arg is PlayerMoving {
 
 export interface PlayerStartMoving {
   kind: MessageKind.PlayerStartMoving;
-  id: number;
   start: boolean;
   direction: Direction;
 }
@@ -151,7 +152,6 @@ export function isPlayerStartMoving(arg: any): arg is PlayerStartMoving {
   return (
     arg &&
     arg.kind === MessageKind.PlayerStartMoving &&
-    isNumber(arg.id) &&
     isBoolean(arg.start) &&
     isDirection(arg.direction)
   );

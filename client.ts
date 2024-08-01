@@ -71,7 +71,6 @@ const ws = new WebSocket(`ws://localhost:${common.PORT}/`);
         if (direction !== undefined) {
           common.sendMessage<common.PlayerStartMoving>(ws, {
             kind: common.MessageKind.PlayerStartMoving,
-            id: me.id,
             start: true,
             direction,
           });
@@ -86,7 +85,6 @@ const ws = new WebSocket(`ws://localhost:${common.PORT}/`);
         if (direction !== undefined) {
           common.sendMessage<common.PlayerStartMoving>(ws, {
             kind: common.MessageKind.PlayerStartMoving,
-            id: me.id,
             start: false,
             direction,
           });
