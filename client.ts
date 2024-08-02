@@ -22,7 +22,7 @@ import * as common from "./common";
 
   const joinedPlayers = new Map<number, common.Player>();
 
-  ws.addEventListener("open", () => { });
+  ws.addEventListener("open", () => {});
 
   ws.addEventListener("message", (e: MessageEvent) => {
     if (e.data instanceof ArrayBuffer) {
@@ -46,55 +46,47 @@ import * as common from "./common";
         };
 
         joinedPlayers.set(me.id, me);
+      } else if (
+        view.byteLength === common.PlayerJoinedStruct.size &&
+        common.PlayerJoinedStruct.kind.read(view, 0) ===
+          common.MessageKind.PlayerJoined
+      ) {
+        const id = common.PlayerJoinedStruct.id.read(view, 0);
+
+        joinedPlayers.set(id, {
+          id,
+          x: common.PlayerJoinedStruct.x.read(view, 0),
+          y: common.PlayerJoinedStruct.y.read(view, 0),
+          moving: common.movingFromMask(
+            common.PlayerJoinedStruct.moving.read(view, 0),
+          ),
+          hue: (common.PlayerJoinedStruct.hue.read(view, 0) / 256) * 360,
+        });
+      } else if (
+        view.byteLength === common.PlayerMovingStruct.size &&
+        common.PlayerMovingStruct.kind.read(view, 0) ===
+          common.MessageKind.PlayerMoving
+      ) {
+        const id = common.PlayerMovingStruct.id.read(view, 0);
+        const player = joinedPlayers.get(id);
+
+        if (player) {
+          player.x = common.PlayerMovingStruct.x.read(view, 0);
+          player.y = common.PlayerMovingStruct.y.read(view, 0);
+          player.moving = common.movingFromMask(
+            common.PlayerMovingStruct.moving.read(view, 0),
+          );
+        }
+      } else if (
+        view.byteLength === common.PlayerLeftStruct.size &&
+        common.PlayerLeftStruct.kind.read(view, 0) ===
+          common.MessageKind.PlayerLeft
+      ) {
+        joinedPlayers.delete(common.PlayerLeftStruct.id.read(view, 0));
       }
     } else {
       console.error("Unknown message: ", e.data);
       ws?.close();
-    }
-
-    return;
-    const data = JSON.parse(e.data);
-
-    if (common.isWelcome(data)) {
-      me = {
-        id: data.id,
-        x: data.x,
-        y: data.y,
-        moving: {
-          left: false,
-          right: false,
-          up: false,
-          down: false,
-        },
-        hue: data.hue,
-      };
-
-      joinedPlayers.set(data.id, me);
-    } else if (common.isPlayerJoined(data)) {
-      joinedPlayers.set(data.id, {
-        id: data.id,
-        x: data.x,
-        y: data.y,
-        moving: {
-          left: false,
-          right: false,
-          up: false,
-          down: false,
-        },
-        hue: data.hue,
-      });
-    } else if (common.isPlayerMoving(data)) {
-      const player = joinedPlayers.get(data.id);
-
-      if (player) {
-        player.x = data.x;
-        player.y = data.y;
-        player.moving[data.direction] = data.start;
-      }
-    } else if (common.isPlayerLeft(data)) {
-      joinedPlayers.delete(data.id);
-    } else {
-      console.error("Unknown message: ", data);
     }
   });
 

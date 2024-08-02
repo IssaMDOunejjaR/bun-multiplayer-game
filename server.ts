@@ -62,12 +62,10 @@ function printStats() {
   console.log(" Players left:", stats.playersLeft);
 }
 
-function publish<T>(ws: ServerWebSocket<SocketData> | Server, message: T) {
-  const data = JSON.stringify(message);
+function publish(ws: ServerWebSocket<SocketData> | Server, message: DataView) {
+  ws.publish("game", message);
 
-  ws.publish("game", data);
-
-  return data.length * joinedPlayers.size;
+  return message.byteLength * joinedPlayers.size;
 }
 
 interface PlayerWithSocket extends common.Player {
@@ -163,8 +161,7 @@ function onMessage(ws: ServerWebSocket<SocketData>, message: string) {
         id: ws.data.id,
         x: player.x,
         y: player.y,
-        direction: data.direction,
-        start: data.start,
+        moving: player.moving,
       });
     }
   } else {
@@ -213,11 +210,6 @@ function tick() {
             player.ws.send(view);
 
             byteSentCount += view.byteLength;
-
-            // byteSentCount += common.sendMessage<common.Welcome>(
-            //   player.ws,
-            //   event,
-            // );
             messageCount += 1;
           }
         }
@@ -229,46 +221,102 @@ function tick() {
           if (playerJoined) {
             joinedPlayers.forEach((otherPlayer) => {
               if (otherPlayer.id !== playerJoined.id) {
-                byteSentCount += common.sendMessage<common.PlayerJoined>(
-                  playerJoined.ws,
-                  {
-                    kind: common.MessageKind.PlayerJoined,
-                    id: otherPlayer.id,
-                    x: otherPlayer.x,
-                    y: otherPlayer.y,
-                    moving: otherPlayer.moving,
-                    hue: otherPlayer.hue,
-                  },
+                const view = new DataView(
+                  new ArrayBuffer(common.PlayerJoinedStruct.size),
                 );
+
+                common.PlayerJoinedStruct.kind.write(
+                  view,
+                  0,
+                  common.MessageKind.PlayerJoined,
+                );
+                common.PlayerJoinedStruct.id.write(view, 0, otherPlayer.id);
+                common.PlayerJoinedStruct.x.write(view, 0, otherPlayer.x);
+                common.PlayerJoinedStruct.y.write(view, 0, otherPlayer.y);
+                common.PlayerJoinedStruct.moving.write(
+                  view,
+                  0,
+                  common.movingMask(otherPlayer.moving),
+                );
+                common.PlayerJoinedStruct.hue.write(
+                  view,
+                  0,
+                  (otherPlayer.hue / 360) * 256,
+                );
+
+                playerJoined.ws.send(view);
+
+                byteSentCount += view.byteLength;
                 messageCount += 1;
               }
             });
 
-            byteSentCount += publish<common.PlayerJoined>(playerJoined.ws, {
-              kind: common.MessageKind.PlayerJoined,
-              id: playerJoined.id,
-              x: playerJoined.x,
-              y: playerJoined.y,
-              moving: playerJoined.moving,
-              hue: playerJoined.hue,
-            });
+            const view = new DataView(
+              new ArrayBuffer(common.PlayerJoinedStruct.size),
+            );
 
+            common.PlayerJoinedStruct.kind.write(
+              view,
+              0,
+              common.MessageKind.PlayerJoined,
+            );
+            common.PlayerJoinedStruct.id.write(view, 0, playerJoined.id);
+            common.PlayerJoinedStruct.x.write(view, 0, playerJoined.x);
+            common.PlayerJoinedStruct.y.write(view, 0, playerJoined.y);
+            common.PlayerJoinedStruct.moving.write(
+              view,
+              0,
+              common.movingMask(playerJoined.moving),
+            );
+            common.PlayerJoinedStruct.hue.write(
+              view,
+              0,
+              (playerJoined.hue / 360) * 256,
+            );
+
+            byteSentCount += publish(playerJoined.ws, view);
             messageCount += joinedPlayers.size;
           }
         }
         break;
       case common.MessageKind.PlayerMoving:
         {
-          byteSentCount += publish(server, event);
+          const view = new DataView(
+            new ArrayBuffer(common.PlayerMovingStruct.size),
+          );
+
+          common.PlayerMovingStruct.kind.write(
+            view,
+            0,
+            common.MessageKind.PlayerMoving,
+          );
+          common.PlayerMovingStruct.id.write(view, 0, event.id);
+          common.PlayerMovingStruct.x.write(view, 0, event.x);
+          common.PlayerMovingStruct.y.write(view, 0, event.y);
+          common.PlayerMovingStruct.moving.write(
+            view,
+            0,
+            common.movingMask(event.moving),
+          );
+
+          byteSentCount += publish(server, view);
           messageCount += joinedPlayers.size;
         }
         break;
       case common.MessageKind.PlayerLeft:
         {
-          byteSentCount += publish(server, {
-            kind: common.MessageKind.PlayerLeft,
-            id: event.id,
-          });
+          const view = new DataView(
+            new ArrayBuffer(common.PlayerLeftStruct.size),
+          );
+
+          common.PlayerLeftStruct.kind.write(
+            view,
+            0,
+            common.MessageKind.PlayerLeft,
+          );
+          common.PlayerLeftStruct.id.write(view, 0, event.id);
+
+          byteSentCount += publish(server, view);
           messageCount += joinedPlayers.size;
         }
         break;

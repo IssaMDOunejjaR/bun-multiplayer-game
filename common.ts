@@ -164,6 +164,20 @@ export interface PlayerJoined {
   hue: number;
 }
 
+export const PlayerJoinedStruct = (() => {
+  const alloc = { iota: 0 };
+
+  return {
+    kind: allocUint8Field(alloc),
+    id: allocUint32Field(alloc),
+    x: allocFloat32Field(alloc),
+    y: allocFloat32Field(alloc),
+    moving: allocUint8Field(alloc),
+    hue: allocUint8Field(alloc),
+    size: alloc.iota,
+  };
+})();
+
 export function isPlayerJoined(arg: any): arg is PlayerJoined {
   return (
     arg &&
@@ -190,9 +204,21 @@ export interface PlayerMoving {
   id: number;
   x: number;
   y: number;
-  start: boolean;
-  direction: Direction;
+  moving: Moving;
 }
+
+export const PlayerMovingStruct = (() => {
+  const alloc = { iota: 0 };
+
+  return {
+    kind: allocUint8Field(alloc),
+    id: allocUint32Field(alloc),
+    x: allocFloat32Field(alloc),
+    y: allocFloat32Field(alloc),
+    moving: allocUint8Field(alloc),
+    size: alloc.iota,
+  };
+})();
 
 export function isPlayerMoving(arg: any): arg is PlayerMoving {
   return (
@@ -220,6 +246,16 @@ export function isPlayerStartMoving(arg: any): arg is PlayerStartMoving {
     isDirection(arg.direction)
   );
 }
+
+export const PlayerLeftStruct = (() => {
+  const alloc = { iota: 0 };
+
+  return {
+    kind: allocUint8Field(alloc),
+    id: allocUint32Field(alloc),
+    size: alloc.iota,
+  };
+})();
 
 function isNumber(arg: any): arg is number {
   return typeof arg === "number";
@@ -258,4 +294,37 @@ export function sendMessage<T>(
   ws.send(JSON.stringify(message));
 
   return data.length;
+}
+
+const directions: Direction[] = ["left", "right", "up", "down"];
+
+export function movingMask(moving: Moving): number {
+  let mask = 0;
+
+  for (let i = 0; i < directions.length; i++) {
+    if (moving[directions[i]]) {
+      mask |= 1 << i;
+    }
+  }
+
+  return mask;
+}
+
+export function setMovingMask(moving: Moving, mask: number) {
+  for (let i = 0; i < directions.length; i++) {
+    moving[directions[i]] = (mask & (1 << i)) !== 0;
+  }
+}
+
+export function movingFromMask(mask: number): Moving {
+  const moving: Moving = {
+    left: false,
+    right: false,
+    up: false,
+    down: false,
+  };
+
+  setMovingMask(moving, mask);
+
+  return moving;
 }
